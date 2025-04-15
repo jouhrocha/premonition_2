@@ -1,0 +1,7 @@
+Flask==
+pandas==
+pandas_ta==
+krakenex==
+python-dotenv==
+schedule==
+
