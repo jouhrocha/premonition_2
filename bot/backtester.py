@@ -127,17 +127,28 @@ def run_backtest(pair, interval, start_date, end_date):
     logger.info(f"Resultado Backtest: PnL Neto={net_pnl:.2f}, Win Rate={win_rate:.2f}%")
 
     # --- Visualización (Implementación Necesaria) ---
-    # plt.figure(figsize=(12, 6))
-    # plt.plot(df_history.index, df_history['close'], label='Precio Cierre')
+    plt.figure(figsize=(12, 6))
+    plt.plot(df_history.index, df_history['close'], label='Precio Cierre')
+
     # Marcar trades en el gráfico (verde/rojo)
-    # plt.title(f"Backtest {pair}")
-    # plt.legend()
-    # plt.show()
+    for index, trade in results_df.iterrows():
+        color = 'green' if trade['pnl'] > 0 else 'red'
+        plt.scatter(index, trade['exit_price'], color=color, marker='o', s=50)
+
+    plt.title(f"Backtest {pair}")
+    plt.legend()
+    plt.xlabel("Fecha")
+    plt.ylabel("Precio")
+    plt.grid(True)
+    plt.show()
 
     # Curva de Capital
-    # plt.figure(figsize=(12, 4))
-    # plt.plot(results_df.index, results_df['capital_after'], label='Equity Curve')
-    # plt.title("Curva de Capital")
-    # plt.show()
+    plt.figure(figsize=(12, 4))
+    plt.plot(results_df.index, results_df['capital_after'], label='Equity Curve')
+    plt.title("Curva de Capital")
+    plt.xlabel("Fecha")
+    plt.ylabel("Capital")
+    plt.grid(True)
+    plt.show()
 
     return results_df # Retornar DataFrame con los trades

@@ -4,4 +4,6 @@ pandas_ta==
 krakenex==
 python-dotenv==
 schedule==
-
+openai==
+pandas==
+ta==

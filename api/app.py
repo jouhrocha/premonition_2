@@ -66,21 +66,51 @@ def stop_trade():
     # 2. Llamar a kraken_api.place_order para cerrar al mercado
     # 3. Actualizar estado interno del bot
     logger.warning("API: Solicitud /api/control/stop_trade recibida (No implementado)")
-    return jsonify({"message": "Funcionalidad no implementada"}), 501
+    try:
+        # Asumiendo que tienes acceso al estado actual de la posición
+        # y a la función para obtener el ID de la orden asociada.
+        # Esto es un ejemplo y DEBE ser adaptado a tu implementación real.
 
-# --- Configuración de SocketIO (Opcional) ---
-# @socketio.on('connect')
-# def handle_connect():
-#     logger.info('API: Cliente conectado a WebSocket')
+        # 1. Obtener la posición actual (ejemplo)
+        position = { # Datos simulados - DEBERÍA venir del estado del bot
+             'pair': 'XBT/USD', 'direction': 'LONG', 'size': 0.01, 'entry_price': 40000,
+             'sl': 39800, 'tp1': 40400, 'current_price': 40150,
+             'pnl': (40150-40000)*0.01, 'pnl_pct': (40150/40000 - 1)*100
+        } if True else None
 
-# def emit_status_update():
-#     """Función para enviar actualizaciones de estado vía WebSocket."""
-#     status_data = get_status().get_json() # Obtener datos del endpoint
-#     if status_data and not status_data.get('error'):
-#          logger.debug("API: Enviando actualización de estado vía WebSocket")
-#          socketio.emit('status_update', status_data)
+        if not position:
+            return jsonify({"message": "No hay posición abierta para cerrar"}), 400
 
-# Podría llamarse periódicamente o cuando el estado del bot cambie.
+        # Determinar el tipo de orden para cerrar (opuesto a la dirección)
+        order_type = 'sell' if position['direction'] == 'LONG' else 'buy'
+
+        # 2. Llamar a kraken_api.place_order para cerrar al mercado
+        #  Adaptar los parámetros a los que requiere tu función place_order
+        #  Esto es un ejemplo y puede requerir ajustes significativos.
+        pair = position['pair'].replace('/', '') # Formato del par para Kraken
+        volume = position['size'] # Cantidad a cerrar
+        order_params = {
+            'pair': pair,
+            'type': order_type,
+            'ordertype': 'market', # Cierra al precio actual de mercado
+            'volume': volume
+        }
+        order_result = kraken_api.place_order(**order_params)
+
+        if order_result and order_result['status'] == 'ok': # Adaptar según la respuesta de Kraken
+            # 3. Actualizar estado interno del bot
+            #  Esto implica limpiar la posición actual, registrar el trade cerrado, etc.
+            #  Depende de cómo gestionas el estado en tu bot.
+            # bot_main.clear_position() # Ejemplo: Limpiar la posición
+            logger.info(f"API: Orden de cierre enviada: {order_result}")
+            return jsonify({"message": "Orden de cierre enviada", "order_info": order_result}), 200
+        else:
+            logger.error(f"API: Error al enviar orden de cierre: {order_result}")
+            return jsonify({"error": "Error al enviar orden de cierre", "details": order_result}), 500
+
+    except Exception as e:
+        logger.error(f"API Error en /api/control/stop_trade: {e}", exc_info=True)
+        return jsonify({"error": "Error interno al cerrar la posición"}), 500
 
 # --- Ejecución de la API Flask ---
 if __name__ == '__main__':

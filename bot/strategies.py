@@ -194,6 +194,178 @@ def check_breakout_signal(df_with_indicators):
     else:
         return SIGNAL_NONE, "Sin señal de rotura"
 
-# --- Aquí irían las funciones simétricas para señales BAJISTAS ---
-# def check_reversal_signal_short(...): ...
-# def check_breakout_signal_short(...): ...
+def check_reversal_signal_short(df_with_indicators):
+    """
+    Evalúa la última vela del DataFrame para una señal de Reversión BAJISTA.
+    (Simétrico a check_reversal_signal)
+    """
+    if df_with_indicators is None or len(df_with_indicators) < max(config.EMA_FAST_PERIOD, config.SMA_SLOW_PERIOD, config.SMA_TREND_PERIOD, 5):
+        return SIGNAL_NONE, "Datos insuficientes (SHORT Reversal)"
+
+    try:
+        prev = df_with_indicators.iloc[-2]
+        last = df_with_indicators.iloc[-1]
+    except IndexError:
+        return SIGNAL_NONE, "Insuficientes velas recientes (SHORT Reversal)"
+
+    # --- Evaluar Condiciones para Reversión BAJISTA ---
+    score = 0
+    details = []
+
+    # 1. Contexto de Subida y Sobrecompra: Precio sobre MAs?
+    is_extended_up = (last['close'] > prev['EMA_fast']) and (last['close'] > prev['SMA_slow'])
+    if is_extended_up:
+        score += 1
+        details.append("Precio sobre MAs (SHORT)")
+
+    # 2. Nivel de Resistencia Clave: (Placeholder)
+    # ...
+
+    # 3. Vela de Giro Bajista: Envolvente o Estrella Fugaz con mecha superior
+    is_bearish_candle = last['close'] < last['open']
+    is_prev_bullish = prev['close'] > prev['open']
+    is_engulfing = is_bearish_candle and is_prev_bullish and \
+                   last['close'] < prev['open'] and last['open'] > prev['close']
+
+    # Mecha superior significativa
+    total_range = last['high'] - last['low']
+    upper_wick = last['high'] - max(last['open'], last['close'])
+    has_upper_wick = total_range > 0 and (upper_wick / total_range) > 0.3
+
+    is_reversal_candle = is_bearish_candle and (is_engulfing or has_upper_wick)
+    if is_reversal_candle:
+        score += 1
+        details.append(f"Vela Bajista{'Envolvente' if is_engulfing else ''}{'+' if is_engulfing and has_upper_wick else ''}{'Mecha Superior' if has_upper_wick else ''} (SHORT)")
+
+    # 4. Volumen Alto en Vela de Giro
+    is_volume_high = last['volume'] > last['Volume_MA'] * 1.1
+    if is_volume_high:
+        score += 1
+        details.append("Volumen Alto (SHORT)")
+
+    # 5. Indicadores en Sobrecompra / Divergencia
+    is_rsi_overbought = last['RSI'] > config.RSI_OVERBOUGHT
+    is_stoch_overbought = last['STOCHk'] > config.STOCH_OVERBOUGHT and last['STOCHd'] > config.STOCH_OVERBOUGHT
+
+    # Divergencia Bajista RSI Simple: Precio hizo nuevo máximo, RSI no
+    made_higher_high = last['high'] > prev['high']
+    rsi_lower_high = last['RSI'] < prev['RSI']
+    has_rsi_divergence = made_higher_high and rsi_lower_high
+
+    if is_rsi_overbought or is_stoch_overbought or has_rsi_divergence:
+        score += 1
+        details.append(f"{'RSI>70 ' if is_rsi_overbought else ''}{'Stoch>80 ' if is_stoch_overbought else ''}{'DivRSI ' if has_rsi_divergence else ''} (SHORT)")
+
+    # --- Decisión del Semáforo ---
+    if score >= config.REVERSAL_CONFIDENCE_THRESHOLD:
+        signal_type = SIGNAL_GREEN
+        signal_details = f"Reversión Bajista ({score}/5): {', '.join(details)}"
+        logger.info(signal_details)
+
+        # Calcular SL y TP (Invertido para SHORT)
+        stop_loss_price = last['high'] * (1 + 0.001)  # Un poco por encima del máximo
+        entry_price = last['close']
+        risk_per_unit = stop_loss_price - entry_price
+        if risk_per_unit <= 0: return SIGNAL_NONE, "Distancia de stop inválida (SHORT)"
+        take_profit_price_1 = entry_price - config.TP_RR_RATIO_1 * risk_per_unit
+        take_profit_price_2 = entry_price - config.TP_RR_RATIO_2 * risk_per_unit if config.ENABLE_PARTIAL_TP else None
+
+        return signal_type, {
+            "strategy": "Reversal",
+            "direction": "SHORT",
+            "details": signal_details,
+            "entry_price": entry_price,
+            "stop_loss": stop_loss_price,
+            "take_profit_1": take_profit_price_1,
+            "take_profit_2": take_profit_price_2
+        }
+    elif score > 0:
+        logger.debug(f"Señal Reversión Débil BAJISTA ({score}/5) ignorada: {', '.join(details)}")
+        return SIGNAL_RED, f"Reversión Bajista Débil ({score}/5)"
+    else:
+        return SIGNAL_NONE, "Sin señal de reversión bajista"
+
+
+def check_breakout_signal_short(df_with_indicators):
+    """
+    Evalúa la última vela para una señal de Rotura BAJISTA.
+    (Simétrico a check_breakout_signal)
+    """
+    if df_with_indicators is None or len(df_with_indicators) < config.BREAKOUT_LOOKBACK_PERIOD + 1:
+        return SIGNAL_NONE, "Datos insuficientes para breakout (SHORT)"
+
+    try:
+        lookback_candles = df_with_indicators.iloc[-(config.BREAKOUT_LOOKBACK_PERIOD + 1):-1]
+        last = df_with_indicators.iloc[-1]
+    except IndexError:
+        return SIGNAL_NONE, "Insuficientes velas recientes para breakout (SHORT)"
+
+    # --- Evaluar Condiciones para Rotura BAJISTA ---
+    score = 0
+    details = []
+
+    # 1. Identificar Consolidación y Nivel de Ruptura
+    consolidation_low = lookback_candles['low'].min()  # Mínimo del rango reciente
+
+    # 2. Ruptura Clara del Nivel
+    is_breakdown_candle = last['close'] < consolidation_low
+    if is_breakdown_candle:
+        score += 1
+        details.append(f"Ruptura BAJISTA de {consolidation_low:.2f}")
+
+    # 3. Volumen Seco en Consolidación (Placeholder)
+    volume_contracting = True  # Placeholder
+    if volume_contracting:
+        score += 1
+        details.append("Volumen Seco (Placeholder, SHORT)")
+
+    # 4. Volumen Alto en la Ruptura
+    avg_lookback_volume = lookback_candles['volume'].mean()
+    is_breakout_volume_high = last['volume'] > avg_lookback_volume * config.BREAKOUT_VOLUME_FACTOR
+    if is_breakout_volume_high:
+        score += 1
+        details.append(f"Volumen Ruptura Alto (>{config.BREAKOUT_VOLUME_FACTOR:.1f}x) (SHORT)")
+
+    # 5. Alineación con Tendencia Principal (SMA_trend)
+    is_downtrend = last['close'] < last['SMA_trend']
+    if is_downtrend:
+        score += 1
+        details.append("Tendencia Principal Bajista (SHORT)")
+
+    # 6. Confirmaciones Adicionales (RSI no extremo, sin divergencia alcista)
+    is_rsi_ok = last['RSI'] > 20  # RSI no esté muy bajo
+    if is_rsi_ok:
+        score += 1
+        details.append("RSI no extremo (SHORT)")
+
+    # --- Decisión del Semáforo ---
+    breakout_threshold = config.REVERSAL_CONFIDENCE_THRESHOLD  # Usamos el mismo por ahora
+    if is_breakdown_candle and score >= breakout_threshold:
+        signal_type = SIGNAL_GREEN
+        signal_details = f"Rotura Bajista ({score}/6): {', '.join(details)}"
+        logger.info(signal_details)
+
+        # Calcular SL y TP (Invertido para SHORT)
+        stop_loss_price = consolidation_low * (1 + 0.001)  # Justo encima del nivel roto
+        entry_price = last['close']
+        risk_per_unit = stop_loss_price - entry_price
+        if risk_per_unit <= 0: return SIGNAL_NONE, "Distancia de stop inválida (SHORT)"
+
+        # TP por R:R o Proyección (usamos R:R por simplicidad)
+        take_profit_price_1 = entry_price - config.TP_RR_RATIO_1 * risk_per_unit
+        take_profit_price_2 = entry_price - config.TP_RR_RATIO_2 * risk_per_unit if config.ENABLE_PARTIAL_TP else None
+
+        return signal_type, {
+            "strategy": "Breakout",
+            "direction": "SHORT",
+            "details": signal_details,
+            "entry_price": entry_price,
+            "stop_loss": stop_loss_price,
+            "take_profit_1": take_profit_price_1,
+            "take_profit_2": take_profit_price_2
+        }
+    elif is_breakdown_candle and score > 0:
+        logger.debug(f"Señal Rotura Débil BAJISTA ({score}/6) ignorada: {', '.join(details)}")
+        return SIGNAL_RED, f"Rotura Bajista Débil ({score}/6)"
+    else:
+        return SIGNAL_NONE, "Sin señal de rotura bajista"
