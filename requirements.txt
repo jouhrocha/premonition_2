@@ -7,3 +7,6 @@ schedule==
 openai==
 pandas==
 ta==
+arrow==
+pykrakenapi== 
+pydantic==
