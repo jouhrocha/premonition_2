@@ -1,0 +1,203 @@
+************* Module PREMONITION_2.gpt_analyzer
+gpt_analyzer.py:6:0: E0401: Unable to import 'data.context' (import-error)
+gpt_analyzer.py:7:0: E0401: Unable to import 'data.insights.price_action' (import-error)
+gpt_analyzer.py:8:0: E0401: Unable to import 'data.insights.current_price' (import-error)
+gpt_analyzer.py:9:0: E0401: Unable to import 'data.insights.linelevels' (import-error)
+gpt_analyzer.py:10:0: E0401: Unable to import 'data.insights.momentum' (import-error)
+gpt_analyzer.py:11:0: E0401: Unable to import 'data.insights.news' (import-error)
+gpt_analyzer.py:12:0: E0401: Unable to import 'data.sources.yahoo' (import-error)
+gpt_analyzer.py:13:0: E0401: Unable to import 'data.sources.tdameritrade' (import-error)
+gpt_analyzer.py:14:0: E0401: Unable to import 'data.insights.options' (import-error)
+gpt_analyzer.py:15:0: E0401: Unable to import 'data.insights.vix' (import-error)
+gpt_analyzer.py:16:0: E0401: Unable to import 'utils' (import-error)
+gpt_analyzer.py:17:0: E0401: Unable to import 'prompt' (import-error)
+gpt_analyzer.py:18:0: E0401: Unable to import 'bot.utils' (import-error)
+************* Module PREMONITION_2.main
+main.py:6:0: E0401: Unable to import 'bot.strategies' (import-error)
+main.py:7:0: E0401: Unable to import 'bot.kraken_api' (import-error)
+main.py:8:0: E0401: Unable to import 'bot.risk_manager' (import-error)
+main.py:9:0: E0401: Unable to import 'bot.indicators' (import-error)
+main.py:10:0: E0401: Unable to import 'gpt_analyzer' (import-error)
+************* Module PREMONITION_2.tests
+tests.py:5:0: E0401: Unable to import 'test_config' (import-error)
+tests.py:13:8: E0401: Unable to import 'bot' (import-error)
+tests.py:39:8: E0401: Unable to import 'bot' (import-error)
+tests.py:67:8: E0401: Unable to import 'bot' (import-error)
+tests.py:91:8: E0401: Unable to import 'bot' (import-error)
+tests.py:114:8: E0401: Unable to import 'bot' (import-error)
+************* Module PREMONITION_2.utils
+utils.py:4:0: E0401: Unable to import 'openai' (import-error)
+************* Module PREMONITION_2.api.app
+api\app.py:8:0: E0401: Unable to import 'bot' (import-error)
+api\app.py:9:0: E0401: Unable to import 'bot' (import-error)
+api\app.py:10:0: E0401: Unable to import 'bot.utils' (import-error)
+************* Module PREMONITION_2.bot.backtester
+bot\backtester.py:3:0: E0401: Unable to import 'bot' (import-error)
+bot\backtester.py:4:0: E0401: Unable to import 'bot.utils' (import-error)
+bot\backtester.py:43:15: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:44:44: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:45:33: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:47:50: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:47:96: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:49:34: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:51:47: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:53:33: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:62:84: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:62:37: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:62:64: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:62:122: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:62:162: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:65:35: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:66:34: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:66:65: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:67:36: E1136: Value 'position' is unsubscriptable (unsubscriptable-object)
+bot\backtester.py:68:43: E0601: Using variable 'reason' before assignment (used-before-assignment)
+************* Module PREMONITION_2.bot.kraken_api
+bot\kraken_api.py:4:0: E0401: Unable to import 'bot' (import-error)
+bot\kraken_api.py:5:0: E0401: Unable to import 'bot.utils' (import-error)
+************* Module PREMONITION_2.bot.main
+bot\main.py:4:0: E0401: Unable to import 'bot' (import-error)
+bot\main.py:5:0: E0401: Unable to import 'bot.utils' (import-error)
+bot\main.py:6:0: E0401: Unable to import 'gpt_analyzer' (import-error)
+bot\main.py:57:53: E1136: Value 'current_position' is unsubscriptable (unsubscriptable-object)
+bot\main.py:57:85: E1136: Value 'current_position' is unsubscriptable (unsubscriptable-object)
+bot\main.py:57:112: E1136: Value 'current_position' is unsubscriptable (unsubscriptable-object)
+************* Module PREMONITION_2.bot.risk_manager
+bot\risk_manager.py:5:0: E0401: Unable to import 'bot' (import-error)
+bot\risk_manager.py:6:0: E0401: Unable to import 'bot.utils' (import-error)
+bot\risk_manager.py:7:0: E0401: Unable to import 'bot' (import-error)
+bot\risk_manager.py:8:0: E0401: Unable to import 'gpt_analyzer' (import-error)
+************* Module PREMONITION_2.bot.scoring
+bot\scoring.py:2:0: E0401: Unable to import 'bot' (import-error)
+bot\scoring.py:3:0: E0401: Unable to import 'bot.utils' (import-error)
+bot\scoring.py:4:0: E0401: Unable to import 'bot' (import-error)
+************* Module PREMONITION_2.bot.strategies
+bot\strategies.py:2:0: E0401: Unable to import 'bot' (import-error)
+bot\strategies.py:3:0: E0401: Unable to import 'bot.utils' (import-error)
+************* Module PREMONITION_2.bot.utils
+bot\utils.py:4:0: E0401: Unable to import 'bot' (import-error)
+************* Module PREMONITION_2.config.validator
+config\validator.py:2:0: E0401: Unable to import 'PyQt5.QtWidgets' (import-error)
+config\validator.py:36:18: E1120: No value for argument 'config' in function call (no-value-for-parameter)
+************* Module PREMONITION_2.core.backtester
+core\backtester.py:9:0: E0401: Unable to import 'utils.database' (import-error)
+core\backtester.py:10:0: E0401: Unable to import 'core.data_fetcher' (import-error)
+core\backtester.py:11:0: E0401: Unable to import 'core.pattern_detector' (import-error)
+core\backtester.py:12:0: E0401: Unable to import 'models.candle' (import-error)
+************* Module PREMONITION_2.core.bot
+core\bot.py:6:0: E0401: Unable to import 'PyQt5.QtCore' (import-error)
+core\bot.py:7:0: E0401: Unable to import 'ccxt' (import-error)
+core\bot.py:8:0: E0401: Unable to import 'utils.database' (import-error)
+core\bot.py:9:0: E0401: Unable to import 'core.data_fetcher' (import-error)
+core\bot.py:10:0: E0401: Unable to import 'core.pattern_detector' (import-error)
+core\bot.py:11:0: E0401: Unable to import 'core.pattern_analyzer' (import-error)
+core\bot.py:12:0: E0401: Unable to import 'core.trade_executor' (import-error)
+core\bot.py:903:4: E0102: method already defined line 551 (function-redefined)
+core\bot.py:929:16: E0401: Unable to import 'aiohttp' (import-error)
+core\bot.py:942:16: E0401: Unable to import 'ccxt.async_support' (import-error)
+core\bot.py:959:4: E0102: method already defined line 536 (function-redefined)
+************* Module PREMONITION_2.core.data_collector
+core\data_collector.py:11:0: E0401: Unable to import 'core.data_fetcher' (import-error)
+core\data_collector.py:12:0: E0401: Unable to import 'utils.symbol_validator' (import-error)
+************* Module PREMONITION_2.core.data_fetcher
+core\data_fetcher.py:9:0: E0401: Unable to import 'ccxt' (import-error)
+core\data_fetcher.py:10:0: E0401: Unable to import 'ccxt.async_support' (import-error)
+core\data_fetcher.py:12:0: E0401: Unable to import 'utils.symbol_validator' (import-error)
+************* Module PREMONITION_2.core.pattern_analyzer
+core\pattern_analyzer.py:10:0: E0401: Unable to import 'utils.database' (import-error)
+core\pattern_analyzer.py:11:0: E0401: Unable to import 'core.data_fetcher' (import-error)
+core\pattern_analyzer.py:73:16: E0401: Unable to import 'core.data_fetcher' (import-error)
+core\pattern_analyzer.py:91:12: E0401: Unable to import 'core.pattern_detector' (import-error)
+************* Module PREMONITION_2.core.pattern_detector
+core\pattern_detector.py:5:0: E0401: Unable to import 'talib' (import-error)
+core\pattern_detector.py:6:0: E0401: Unable to import 'models.candle' (import-error)
+core\pattern_detector.py:7:0: E0401: Unable to import 'utils.database' (import-error)
+core\pattern_detector.py:66:31: E1102: detect_func is not callable (not-callable)
+************* Module PREMONITION_2.core.symbols_list
+core\symbols_list.py:5:0: E0401: Unable to import 'ccxt.async_support' (import-error)
+************* Module PREMONITION_2.core.trade_executor
+core\trade_executor.py:7:0: E0401: Unable to import 'ccxt' (import-error)
+core\trade_executor.py:8:0: E0401: Unable to import 'ccxt.async_support' (import-error)
+core\trade_executor.py:10:0: E0401: Unable to import 'core.data_fetcher' (import-error)
+core\trade_executor.py:583:4: E0102: method already defined line 501 (function-redefined)
+************* Module PREMONITION_2.core
+core\__init__.py:2:0: E0401: Unable to import 'core.bot' (import-error)
+core\__init__.py:3:0: E0401: Unable to import 'core.data_fetcher' (import-error)
+core\__init__.py:4:0: E0401: Unable to import 'core.pattern_analyzer' (import-error)
+core\__init__.py:5:0: E0401: Unable to import 'core.pattern_detector' (import-error)
+core\__init__.py:6:0: E0401: Unable to import 'core.trade_executor' (import-error)
+core\__init__.py:7:0: E0401: Unable to import 'core.visualizer' (import-error)
+core\__init__.py:8:0: E0401: Unable to import 'core.data_collector' (import-error)
+core\__init__.py:16:4: E0603: Undefined variable name 'VisualizerDataCollector' in __all__ (undefined-all-variable)
+************* Module PREMONITION_2.data.context
+data\context.py:8:0: E0401: Unable to import 'data.sources.datasource' (import-error)
+data\context.py:9:0: E0401: Unable to import 'data.insights.insight' (import-error)
+data\context.py:10:0: E0401: Unable to import 'data.models' (import-error)
+data\context.py:11:0: E0401: Unable to import 'utils' (import-error)
+************* Module PREMONITION_2.data.insights.current_price
+data\insights\current_price.py:6:0: E0401: Unable to import 'data.insights.insight' (import-error)
+data\insights\current_price.py:7:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.insights.insight
+data\insights\insight.py:3:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.insights.linelevels
+data\insights\linelevels.py:5:0: E0401: Unable to import 'data.insights.insight' (import-error)
+data\insights\linelevels.py:6:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.insights.momentum
+data\insights\momentum.py:4:0: E0401: Unable to import 'data.insights.insight' (import-error)
+data\insights\momentum.py:5:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.insights.news
+data\insights\news.py:4:0: E0401: Unable to import 'data.insights.insight' (import-error)
+data\insights\news.py:5:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.insights.options
+data\insights\options.py:5:0: E0401: Unable to import 'data.insights.insight' (import-error)
+data\insights\options.py:6:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.insights.price_action
+data\insights\price_action.py:6:0: E0401: Unable to import 'data.insights.insight' (import-error)
+data\insights\price_action.py:7:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.insights.vix
+data\insights\vix.py:6:0: E0401: Unable to import 'data.insights.insight' (import-error)
+data\insights\vix.py:7:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.sources.datasource
+data\sources\datasource.py:5:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.sources.tdameritrade
+data\sources\tdameritrade.py:6:0: E0401: Unable to import 'webdriver_manager.chrome' (import-error)
+data\sources\tdameritrade.py:7:0: E0401: Unable to import 'selenium' (import-error)
+data\sources\tdameritrade.py:8:0: E0401: Unable to import 'tda' (import-error)
+data\sources\tdameritrade.py:11:0: E0401: Unable to import 'selenium.webdriver.chrome.service' (import-error)
+data\sources\tdameritrade.py:13:0: E0401: Unable to import 'data.sources.datasource' (import-error)
+data\sources\tdameritrade.py:14:0: E0401: Unable to import 'data.models' (import-error)
+************* Module PREMONITION_2.data.sources.yahoo
+data\sources\yahoo.py:2:0: E0401: Unable to import 'yfinance' (import-error)
+data\sources\yahoo.py:5:0: E0401: Unable to import 'data.models' (import-error)
+data\sources\yahoo.py:6:0: E0401: Unable to import 'data.sources.datasource' (import-error)
+************* Module PREMONITION_2.frontend.main
+frontend\main.py:10:0: E0401: Unable to import 'ccxt' (import-error)
+frontend\main.py:11:0: E0401: Unable to import 'PyQt5.QtWidgets' (import-error)
+frontend\main.py:15:0: E0401: Unable to import 'PyQt5.QtCore' (import-error)
+frontend\main.py:16:0: E0401: Unable to import 'PyQt5.QtGui' (import-error)
+frontend\main.py:19:0: E0401: Unable to import 'utils.helpers' (import-error)
+frontend\main.py:20:0: E0401: Unable to import 'utils.database' (import-error)
+frontend\main.py:21:0: E0401: Unable to import 'core.bot' (import-error)
+frontend\main.py:22:0: E0401: Unable to import 'core.backtester' (import-error)
+frontend\main.py:23:0: E0401: Unable to import 'core.data_collector' (import-error)
+frontend\main.py:24:0: E0401: Unable to import 'core.pattern_analyzer' (import-error)
+frontend\main.py:704:12: E0401: Unable to import 'core.pattern_analyzer' (import-error)
+frontend\main.py:705:12: E0401: Unable to import 'utils.database' (import-error)
+frontend\main.py:917:12: E0401: Unable to import 'core.backtester' (import-error)
+frontend\main.py:971:20: E0401: Unable to import 'aiohttp' (import-error)
+frontend\main.py:1381:12: E0401: Unable to import 'PyQt5.QtCore' (import-error)
+frontend\main.py:1696:4: E0102: method already defined line 220 (function-redefined)
+frontend\main.py:1706:4: E0102: method already defined line 232 (function-redefined)
+frontend\main.py:1720:4: E0102: method already defined line 256 (function-redefined)
+frontend\main.py:2145:20: E0401: Unable to import 'aiohttp' (import-error)
+frontend\main.py:2162:20: E0401: Unable to import 'ccxt.async_support' (import-error)
+************* Module PREMONITION_2.models
+models\__init__.py:2:0: E0401: Unable to import 'models.candle' (import-error)
+models\__init__.py:3:0: E0401: Unable to import 'models.pattern' (import-error)
+models\__init__.py:4:0: E0401: Unable to import 'models.trade' (import-error)
+************* Module PREMONITION_2.utils.symbol_validator
+utils\symbol_validator.py:4:0: E0401: Unable to import 'ccxt.async_support' (import-error)
+utils\__init__.py:5:0: E0401: Unable to import 'utils.database' (import-error)
+
+------------------------------------------------------------------
+Your code has been rated at 8.47/10 (previous run: 4.11/10, +4.36)

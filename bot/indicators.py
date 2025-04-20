@@ -1,46 +1,48 @@
-# -*- coding: utf-8 -*-
+# bot/indicators.py
+
 import pandas as pd
-# Instalar si es necesario: pip install pandas_ta
-import pandas_ta as ta
-from bot import config
-from bot.utils import logger
+import ta
+from typing import Dict
+import pandas as pd
 
-def add_indicators(df):
+
+def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Añade los indicadores técnicos necesarios al DataFrame de velas.
-    Utiliza la librería pandas_ta para eficiencia.
+    Añade indicadores técnicos al DataFrame de precios.
+    Espera columnas: ['open', 'high', 'low', 'close', 'volume'].
+    Devuelve copia con columnas añadidas:
+      - rsi (14)
+      - macd, macd_signal, macd_diff
+      - stoch_k, stoch_d (14)
+      - ema_50, ema_200
     """
-    if df is None or df.empty:
-        logger.warning("DataFrame vacío, no se pueden calcular indicadores.")
-        return None
+    df = df.copy()
 
-    try:
-        # Calcular indicadores usando pandas_ta
-        df.ta.rsi(length=config.RSI_PERIOD, append=True) # Añade columna 'RSI_14'
-        df.ta.stoch(k=config.STOCH_K, d=config.STOCH_D, append=True) # Añade 'STOCHk_14_3_3', 'STOCHd_14_3_3'
-        df.ta.ema(length=config.EMA_FAST_PERIOD, append=True) # Añade 'EMA_45'
-        df.ta.sma(length=config.SMA_SLOW_PERIOD, append=True) # Añade 'SMA_100'
-        df.ta.sma(length=config.SMA_TREND_PERIOD, append=True) # Añade 'SMA_200'
-        df.ta.sma(close='volume', length=config.REVERSAL_VOLUME_MA_PERIOD, prefix='VOL', append=True) # Media de Volumen
+    # Asegurar las columnas necesarias
+    required = ['open', 'high', 'low', 'close', 'volume']
+    for col in required:
+        if col not in df.columns:
+            raise ValueError(f"DataFrame debe contener columna '{col}'")
 
-        # Renombrar columnas para claridad (pandas_ta puede añadir sufijos)
-        df.rename(columns={
-            f'RSI_{config.RSI_PERIOD}': 'RSI',
-            f'STOCHk_{config.STOCH_K}_{config.STOCH_D}_3': 'STOCHk', # Ajustar si el nombre difiere
-            f'STOCHd_{config.STOCH_K}_{config.STOCH_D}_3': 'STOCHd', # Ajustar si el nombre difiere
-            f'EMA_{config.EMA_FAST_PERIOD}': 'EMA_fast',
-            f'SMA_{config.SMA_SLOW_PERIOD}': 'SMA_slow',
-            f'SMA_{config.SMA_TREND_PERIOD}': 'SMA_trend',
-            f'VOL_SMA_{config.REVERSAL_VOLUME_MA_PERIOD}': 'Volume_MA' # Ajustar si el nombre difiere
-        }, inplace=True)
+    # RSI
+    df['rsi'] = ta.momentum.RSIIndicator(close=df['close'], window=14).rsi()
 
-        logger.debug("Indicadores técnicos añadidos al DataFrame.")
-        return df
+    # MACD
+    macd = ta.trend.MACD(close=df['close'], window_slow=26, window_fast=12, window_sign=9)
+    df['macd'] = macd.macd()
+    df['macd_signal'] = macd.macd_signal()
+    df['macd_diff'] = macd.macd_diff()
 
-    except Exception as e:
-        logger.error(f"Error al calcular indicadores: {e}", exc_info=True)
-        return None
+    # Estocástico
+    stoch = ta.momentum.StochasticOscillator(
+        high=df['high'], low=df['low'], close=df['close'], window=14, smooth_window=3
+    )
+    df['stoch_k'] = stoch.stoch()
+    df['stoch_d'] = stoch.stoch_signal()
 
-# --- Podrían añadirse funciones manuales si pandas_ta no es suficiente ---
-# def calculate_rsi_manual(series, period=14): ...
-# def calculate_sma_manual(series, period=20): ...
+    # EMAs
+    df['ema_50'] = df['close'].ewm(span=50, adjust=False).mean()
+    df['ema_200'] = df['close'].ewm(span=200, adjust=False).mean()
+
+    return df
+

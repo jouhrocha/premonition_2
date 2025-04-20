@@ -1,0 +1,100 @@
+Listado de rutas de carpetas
+El número de serie del volumen es 4EEA-A0C7
+C:.
+¦   .env
+¦   .env example
+¦   .gitignore
+¦   docker-compose.yml
+¦   Dockerfile
+¦   estructura.txt
+¦   gpt_analyzer.py
+¦   LICENCE
+¦   main.py
+¦   prompt.py
+¦   README.md
+¦   requirements.txt
+¦   tests.py
+¦   test_config.py
+¦   utils.py
+¦   __init__.py
+¦   
++---api
+¦       app.py
+¦       models.py
+¦       __init__.py
+¦       
++---bot
+¦       backtester.py
+¦       config.py
+¦       indicators.py
+¦       kraken_api.py
+¦       main.py
+¦       risk_manager.py
+¦       scoring.py
+¦       strategies.py
+¦       utils.py
+¦       __init__.py
+¦       
++---charts
++---config
+¦       settings.json
+¦       validator.py
+¦       __init__.py
+¦       
++---core
+¦       backtester.py
+¦       bot.py
+¦       data_collector.py
+¦       data_collector.py.bak
+¦       data_fetcher.py
+¦       data_fetcher.py.bak
+¦       pattern_analyzer.py
+¦       pattern_detector.py
+¦       symbols_list.py
+¦       trade_executor.py
+¦       visualizer.py
+¦       __init__.py
+¦       
++---data
+¦   ¦   context.py
+¦   ¦   historical_data.db
+¦   ¦   models.py
+¦   ¦   patterns.db
+¦   ¦   __init__.py
+¦   ¦   
+¦   +---historical
+¦   +---insights
+¦   ¦       current_price.py
+¦   ¦       insight.py
+¦   ¦       linelevels.py
+¦   ¦       momentum.py
+¦   ¦       news.py
+¦   ¦       options.py
+¦   ¦       price_action.py
+¦   ¦       vix.py
+¦   ¦       __init__.py
+¦   ¦       
+¦   +---sources
+¦           datasource.py
+¦           tdameritrade.py
+¦           yahoo.py
+¦           __init__.py
+¦           
++---frontend
+¦       main.py
+¦       __init__.py
+¦       
++---models
+¦       candle.py
+¦       pattern.py
+¦       trade.py
+¦       __init__.py
+¦       
++---utils
+        chart_generator.py
+        database.py
+        helpers.py
+        historical_storage.py
+        symbol_validator.py
+        __init__.py
+        

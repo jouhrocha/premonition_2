@@ -2,7 +2,8 @@
 import time
 import schedule # Librería para tareas programadas (pip install schedule)
 from bot import config, kraken_api, indicators, strategies, risk_manager, backtester
-from bot.utils import logger
+from bot.utils import logger, generate_insights_text # Importa generate_insights_text
+from gpt_analyzer import analyze_symbol # Importa analyze_symbol
 
 # --- Estado del Bot ---
 current_position = None # Almacena info de la posición actual: {'id', 'pair', 'direction', 'size', 'entry_price', 'sl', 'tp1', 'tp2', 'entry_time'}
@@ -137,6 +138,23 @@ def check_and_trade():
 
         else:
              logger.info("Filtros activos (Noticias/Horario/Correlación). No se buscan entradas.")
+
+    # Obtener insights técnicos
+    insights_text = generate_insights_text(df_recent)
+
+    # Analizar el símbolo con GPT
+    gpt_result = analyze_symbol(config.TRADING_PAIR, insights_text)
+
+    # Tomar decisiones basadas en los insights técnicos y el resultado de GPT
+    if gpt_result["direction"] == "bullish" and gpt_result["confidence"] > config.CONFIDENCE_THRESHOLD:
+        # ... (lógica para comprar)
+        logger.info(f"GPT es alcista con confianza {gpt_result['confidence']:.2f}. Implementar lógica de compra.")
+    elif gpt_result["direction"] == "bearish" and gpt_result["confidence"] > config.CONFIDENCE_THRESHOLD:
+        # ... (lógica para vender)
+        logger.info(f"GPT es bajista con confianza {gpt_result['confidence']:.2f}. Implementar lógica de venta.")
+    else:
+        # ... (lógica para no operar)
+        logger.info(f"GPT es neutral o tiene baja confianza ({gpt_result['confidence']:.2f}). No se opera.")
 
 
 def run_bot():

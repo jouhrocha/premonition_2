@@ -22,7 +22,6 @@ risk = RiskManager()
 
 def run_premonition():
     print("[Premonition V3] Inicio del sistema IA + técnico")
-    
     for symbol in SYMBOLS:
         print(f"\nAnalizando {symbol}...")
         # Obtener datos OHLCV
@@ -37,6 +36,7 @@ def run_premonition():
         # Analizar el símbolo con GPT
         gpt_result = analyze_symbol(df_with_indicators)
 
+        # Motor de decisión combinado
         decision = decision_engine(symbol, df_with_indicators, gpt_result)
         if decision['action'] == 'buy':
             qty = risk.calculate_position_size(symbol)
@@ -48,7 +48,6 @@ def run_premonition():
             print(f"✅ Venta ejecutada de {symbol} con tamaño {qty}")
         else:
             print(f"❌ No se recomienda operar {symbol} en este momento.")
-
 
 if __name__ == "__main__":
     run_premonition()

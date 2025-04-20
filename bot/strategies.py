@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from bot import config
 from bot.utils import logger
+import pandas as pd
+from typing import Dict
 
 # Constantes para el Semáforo
 SIGNAL_GREEN = "VERDE"
@@ -369,3 +371,94 @@ def check_breakout_signal_short(df_with_indicators):
         return SIGNAL_RED, f"Rotura Bajista Débil ({score}/6)"
     else:
         return SIGNAL_NONE, "Sin señal de rotura bajista"
+
+"""
+Módulo de estrategia para Premonition V3.
+decision_engine combina señales técnicas e IA (GPT) mediante una regla de puntuación.
+"""
+def decision_engine(symbol: str, df: pd.DataFrame, gpt_result: Dict) -> Dict:
+    """
+    Decide acción ('buy', 'sell', 'hold') basada en:
+      - Indicadores técnicos (RSI, MACD)
+      - Opinión de GPT (gpt_result['direction'])
+    Parámetros de gpt_result esperados:
+      {
+        'direction': 'bullish' / 'bearish' / 'neutral',
+        'confidence': float  # 0-100
+      }
+    Devuelve:
+      {
+        'action': 'buy'|'sell'|'hold',
+        'score': float,
+        'details': { ... puntuación por factor ... }
+      }
+    """
+
+    # Pesos (configurables según tu doble IA / backtesting)
+    WEIGHTS = {
+        'rsi': 1.0,
+        'macd': 1.0,
+        'gpt': 2.0
+    }
+    THRESHOLD_BUY = 1.5
+    THRESHOLD_SELL = -1.5
+
+    # Últimos valores de indicadores
+    rsi = df['rsi'].iloc[-1]
+    macd_diff = df['macd_diff'].iloc[-1]
+
+    # Score técnico: RSI
+    # RSI < 30 -> sobreventa -> +1 ; RSI > 70 -> sobrecompra -> -1 ; else 0
+    if rsi < 30:
+        score_rsi = 1
+    elif rsi > 70:
+        score_rsi = -1
+    else:
+        score_rsi = 0
+
+    # Score técnico: MACD diff
+    # macd_diff > 0 -> +1 ; macd_diff < 0 -> -1 ; else 0
+    if macd_diff > 0:
+        score_macd = 1
+    elif macd_diff < 0:
+        score_macd = -1
+    else:
+        score_macd = 0
+
+    # Score GPT
+    direction = gpt_result.get('direction', 'neutral').lower()
+    confidence = gpt_result.get('confidence', 50) / 100  # normalizado 0-1
+    if direction == 'bullish':
+        score_gpt = 1 * confidence
+    elif direction == 'bearish':
+        score_gpt = -1 * confidence
+    else:
+        score_gpt = 0
+
+    # Composición total de la puntuación
+    total_score = (
+        WEIGHTS['rsi'] * score_rsi +
+        WEIGHTS['macd'] * score_macd +
+        WEIGHTS['gpt'] * score_gpt
+    )
+
+    # Decisión final
+    if total_score >= THRESHOLD_BUY:
+        action = 'buy'
+    elif total_score <= THRESHOLD_SELL:
+        action = 'sell'
+    else:
+        action = 'hold'
+
+    return {
+        'action': action,
+        'score': total_score,
+        'details': {
+            'rsi': score_rsi,
+            'macd': score_macd,
+            'gpt': score_gpt
+        }
+    }
+
+# Guardar también un alias para tests
+__all__ = ['decision_engine']

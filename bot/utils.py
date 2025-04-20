@@ -46,3 +46,15 @@ def exponential_backoff_retry(func, *args, **kwargs):
                 delay *= 2 # Backoff exponencial
     # Esta línea no debería alcanzarse si MAX_API_RETRIES > 0
     return None
+
+def generate_insights_text(df_with_indicators):
+    """
+    Genera una cadena descriptiva de los insights técnicos.
+    """
+    last = df_with_indicators.iloc[-1]
+    insights = []
+    insights.append(f"RSI: {last['rsi']:.2f}")
+    insights.append(f"MACD: {last['macd']:.2f}")
+    insights.append(f"EMA50: {last['ema_50']:.2f}")
+    insights.append(f"EMA200: {last['ema_200']:.2f}")
+    return "\n".join(insights)

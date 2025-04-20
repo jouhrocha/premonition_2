@@ -1,0 +1,81 @@
+import logging
+import ccxt
+import ccxt.async_support as ccxtasync
+import asyncio
+from typing import Dict, Any, List
+from models.candle import Candle
+from utils.symbol_validator import SymbolValidator, validate_symbol, get_valid_symbols
+
+logger = logging.getLogger(__name__)
+
+class DataFetcher(SymbolValidator):
+    """Clase para obtener datos de mercado del exchange, con days en lugar de since/limit."""
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.exchange_id = config.get('exchange',{}).get('name','kraken')
+        self.api_key = config.get('exchange',{}).get('api_key','')
+        self.api_secret = config.get('exchange',{}).get('api_secret','')
+        try:
+            self.exchange = getattr(ccxt, self.exchange_id)({
+                'apiKey': self.api_key,
+                'secret': self.api_secret,
+                'enableRateLimit': True
+            })
+            self.async_exchange = getattr(ccxtasync, self.exchange_id)({
+                'apiKey': self.api_key,
+                'secret': self.api_secret,
+                'enableRateLimit': True
+            })
+            logger.info(f"Exchange {self.exchange_id} inicializado correctamente")
+        except Exception as e:
+            logger.error(f"Error creando exchange {self.exchange_id}: {e}")
+            self.exchange = None
+            self.async_exchange = None
+
+        self.symbol_validator = SymbolValidator(self.exchange_id)
+
+    async def initialize(self):
+        logger.info(f"Inicializando DataFetcher para {self.exchange_id}")
+        # Podrías probar .load_markets en self.async_exchange
+        if self.async_exchange:
+            try:
+                await self.async_exchange.load_markets()
+            except Exception as e:
+                logger.error(f"Error en async_exchange.load_markets: {e}")
+
+    async def fetch_historical_data(self, symbol: str, timeframe: str, days: int) -> List[Candle]:
+        """Obtiene velas de 'days' días atrás."""
+        try:
+            valid_symbol = await self.get_valid_symbols(symbol)
+            if not valid_symbol:
+                logger.error(f"Símbolo {symbol} no válido en {self.exchange_id}")
+                return []
+            # Calcular timestamp
+            since_ts = int((ccxt.Exchange.milliseconds() - days*24*60*60*1000))
+            logger.info(f"Obteniendo datos históricos para {symbol} en timeframe {timeframe} de los últimos {days} días")
+            ohlcv = await self.async_exchange.fetch_ohlcv(valid_symbol, timeframe, since=since_ts)
+            logger.info(f"Obtenidos {len(ohlcv)} datos históricos")
+            candles = []
+            for c in ohlcv:
+                cd = Candle(
+                    timestamp=c[0],
+                    open=c[1],
+                    high=c[2],
+                    low=c[3],
+                    close=c[4],
+                    volume=c[5]
+                )
+                candles.append(cd)
+            return candles
+        except Exception as e:
+            logger.error(f"Error al obtener datos históricos: {e}")
+            return []
+
+    async def close(self):
+        """Cierra la sesión async_exchange de ccxt.async_support."""
+        if self.async_exchange:
+            try:
+                await self.async_exchange.close()
+            except Exception as e:
+                logger.error(f"Error cerrando async_exchange: {e}")
+            self.async_exchange = None

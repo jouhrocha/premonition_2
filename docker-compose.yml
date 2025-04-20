@@ -1,14 +1,22 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  premonition:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: premonition_v3
-    env_file:
-      - .env
+  bot:
+    build: .
+    container_name: premonition_bot
+    env_file: .env
+    command: python main.py
     volumes:
       - .:/app
     restart: unless-stopped
-    command: python main.py
+
+  api:
+    build: .
+    container_name: premonition_api
+    env_file: .env
+    command: python api/app.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    restart: unless-stopped

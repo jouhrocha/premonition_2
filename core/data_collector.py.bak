@@ -1,0 +1,426 @@
+#!/usr/bin/env python3
+import asyncio
+import logging
+import time
+import random
+import os
+import json
+from datetime import datetime, timedelta
+import argparse
+from typing import Dict, Any
+
+from utils.helpers import print_banner
+from utils.symbol_validator import SymbolValidator, validate_symbol
+from core.data_fetcher import DataFetcher, Candle
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("data_collector.log"),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger("data_collector")
+
+class DataCollector():
+    """
+    Recopilador de datos históricos para múltiples mercados y timeframes
+    """
+    
+    def __init__(self, config: Dict[str, Any]):
+        """
+        Inicializa el recopilador de datos
+        
+        Args:
+            config: Configuración del recopilador
+        """
+        self.config = config
+        # Configuración de recopilación
+        self.data_config = config.get('data_collection', {})
+        if not self.data_config:
+            # Si no hay configuración específica, usar valores predeterminados
+            self.data_config = {
+                'symbols': [config.get('trading', {}).get('symbol', 'BTC/USD')],
+                'timeframes': [config.get('trading', {}).get('timeframe', '1h')],
+                'days_to_collect': config.get('trading', {}).get('historical_days', 30),
+                'batch_size': 1000
+            }
+        
+        # Obtener valores de configuración
+        self.symbols = self.data_config.get('symbols', ['BTC/USD', 'ETH/USD'])
+        self.timeframes = self.data_config.get('timeframes', ['1h', '4h', '1d'])
+        self.days_to_collect = self.data_config.get('days_to_collect', 30)
+        self.batch_size = self.data_config.get('batch_size', 1000)
+        
+        # Configuración de límite de tasa
+        rate_limit_config = config.get('exchange', {}).get('rate_limit', {})
+        self.rate_limit_delay = rate_limit_config.get('retry_delay', 2.0)
+        self.max_retries = rate_limit_config.get('max_retries', 5)
+        self.requests_per_minute = rate_limit_config.get('requests_per_minute', 60)
+        
+        # Variables de control
+        self.last_request_time = 0
+        self.data_fetcher = None
+        
+        # Directorio para guardar datos
+        self.data_dir = 'data/historical'
+        os.makedirs(self.data_dir, exist_ok=True)
+    
+    async def initialize(self):
+        """Inicializa el recopilador y sus componentes"""
+        try:
+            logger.info("Inicializando recopilador de datos históricos...")
+            
+            # Inicializar validador de símbolos
+            logger.info("Inicializando validador de símbolos...")
+            self.validator = SymbolValidator(self.config.get('exchange', {}).get('id', 'kraken'))
+            await self.validator.initialize()
+            
+            # Inicializar data fetcher
+            logger.info("Inicializando data fetcher...")
+            self.data_fetcher = DataFetcher(self.config)
+            await self.data_fetcher.initialize()
+            return True
+        except Exception as e:
+            logger.error(f"Error al inicializar el recopilador de datos: {e}")
+            return False
+    
+    async def fetch_with_rate_limit(self, symbol, timeframe, since, limit=1000):
+        """
+        Obtiene datos con control de límite de tasa y reintentos
+        
+        Args:
+            symbol: Símbolo a obtener
+            timeframe: Timeframe a obtener
+            since: Timestamp desde donde obtener datos
+            limit: Límite de velas a obtener
+            
+        Returns:
+            Lista de velas obtenidas
+        """
+        retries = 0
+        while retries < self.max_retries:
+            # Asegurar que ha pasado suficiente tiempo desde la última solicitud
+            now = time.time()
+            time_since_last = now - self.last_request_time
+            if time_since_last < self.rate_limit_delay:
+                # Esperar el tiempo necesario
+                await asyncio.sleep(self.rate_limit_delay - time_since_last + random.uniform(0.1, 0.5))
+            
+            try:
+                # Actualizar tiempo de última solicitud
+                self.last_request_time = time.time()
+                
+                # Realizar la solicitud
+                candles = await self.data_fetcher.fetch_historical_data(
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    since=since,
+                    limit=limit
+                )
+                return candles
+                
+            except Exception as e:
+                error_msg = str(e)
+                if "Too many requests" in error_msg:
+                    # Aumentar el retraso exponencialmente en cada reintento
+                    retries += 1
+                    wait_time = self.rate_limit_delay * (2 ** retries) + random.uniform(1, 3)
+                    logger.warning(f"Límite de tasa alcanzado. Esperando {wait_time:.2f} segundos antes de reintentar ({retries}/{self.max_retries})")
+                    await asyncio.sleep(wait_time)
+                else:
+                    # Si es otro tipo de error, relanzarlo
+                    logger.error(f"Error al obtener datos: {e}")
+                    raise
+        
+        # Si llegamos aquí, se agotaron los reintentos
+        raise Exception(f"Se agotaron los reintentos ({self.max_retries}) para obtener datos")
+    
+    async def collect_data_for_symbol_timeframe(self, validate_symbol, symbol, timeframe, days_to_collect):
+        """
+        Recopila datos históricos para un símbolo y timeframe específicos
+        
+        Args:
+            symbol: Símbolo a recopilar
+            timeframe: Timeframe a recopilar
+            days_to_collect: Días a recopilar
+            
+        Returns:
+            True si la recopilación fue exitosa, False en caso contrario
+        """
+        try:
+            logger.info(f"Recopilando datos históricos para {symbol} en timeframe {timeframe}...")
+            
+            # Validar símbolo
+            
+            if not await self.validate_symbol(symbol):
+                logger.error(f"Símbolo {symbol} no es válido")
+                return False
+            
+            # Calcular fecha de inicio
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=days_to_collect)
+            
+            # Crear archivo para guardar datos
+            filename = f"{self.data_dir}/{symbol.replace('/', '_')}_{timeframe}.json"
+            
+            # Verificar si ya existen datos
+            existing_data = []
+            last_timestamp = None
+            
+            if os.path.exists(filename):
+                try:
+                    with open(filename, 'r') as f:
+                        existing_data = json.load(f)
+                    
+                    if existing_data:
+                        # Obtener el timestamp más reciente
+                        last_timestamp = max(candle.get('timestamp', 0) for candle in existing_data)
+                        
+                        # Ajustar fecha de inicio si ya tenemos datos
+                        if last_timestamp:
+                            start_date = datetime.fromtimestamp(last_timestamp / 1000)
+                            logger.info(f"Continuando recopilación desde {start_date}")
+                except Exception as e:
+                    logger.warning(f"Error al cargar datos existentes: {e}")
+            
+            # Si no hay datos o son muy antiguos, comenzar desde cero
+            if not last_timestamp or (end_date - start_date).days > days_to_collect:
+                logger.info(f"Comenzando nueva recopilación desde {start_date}")
+                existing_data = []
+            
+            # Recopilar datos en lotes
+            current_date = start_date
+            all_candles = []
+            
+            while current_date < end_date:
+                # Calcular fecha de fin del lote
+                batch_end = min(current_date + timedelta(days=30), end_date)
+                
+                # Convertir a timestamp
+                since_timestamp = int(current_date.timestamp() * 1000)
+                
+                logger.info(f"Recopilando lote desde {current_date} hasta {batch_end}")
+                
+                # Validar símbolo nuevamente (por si acaso)
+                if not await self.validate_symbol(symbol):
+                    logger.error(f"Símbolo {symbol} no es válido")
+                    return False
+                
+                try:
+                    # Obtener datos con control de límite de tasa
+                    candles = await self.fetch_with_rate_limit(
+                        symbol=symbol,
+                        timeframe=timeframe,
+                        since=since_timestamp,
+                        limit=self.batch_size
+                    )
+                    
+                    if candles:
+                        # Convertir candles a formato serializable
+                        serializable_candles = [
+                            {
+                                'timestamp': c.timestamp,
+                                'open': c.open,
+                                'high': c.high,
+                                'low': c.low,
+                                'close': c.close,
+                                'volume': c.volume
+                            }
+                            for c in candles
+                        ]
+                        
+                        all_candles.extend(serializable_candles)
+                        
+                        # Avanzar a la siguiente fecha
+                        if len(candles) < self.batch_size:
+                            # Si obtenemos menos candles que el límite, avanzar al final
+                            current_date = batch_end
+                        else:
+                            # Avanzar basado en la última vela obtenida
+                            last_candle_time = datetime.fromtimestamp(candles[-1].timestamp / 1000)
+                            current_date = last_candle_time + timedelta(minutes=1)
+                    else:
+                        # Si no hay datos, avanzar al siguiente lote
+                        current_date = batch_end
+                
+                except Exception as e:
+                    logger.warning(f"No se pudieron obtener datos para {symbol} en timeframe {timeframe}: {e}")
+                    # Avanzar al siguiente lote a pesar del error
+                    current_date = batch_end
+            
+            # Combinar datos existentes con nuevos datos
+            if existing_data:
+                # Filtrar para evitar duplicados
+                existing_timestamps = {candle.get('timestamp') for candle in existing_data}
+                new_candles = [candle for candle in all_candles if candle.get('timestamp') not in existing_timestamps]
+                
+                # Combinar y ordenar
+                combined_data = existing_data + new_candles
+                combined_data.sort(key=lambda x: x.get('timestamp', 0))
+            else:
+                combined_data = all_candles
+            
+            # Guardar datos
+            if combined_data:
+                with open(filename, 'w') as f:
+                    json.dump(combined_data, f)
+                
+                logger.info(f"Datos guardados en {filename}: {len(combined_data)} velas")
+            else:
+                logger.warning(f"No se obtuvieron datos para {symbol} en timeframe {timeframe}")
+            
+            logger.info(f"Recopilación completada para {symbol} en timeframe {timeframe}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error al inicializar recopilador: {e}")
+            return False
+    
+    async def run(self, symbol_validator, symbols=None, timeframes=None, limit=100, update_signal=None, progress_signal=None):
+        """
+        Ejecuta la recopilación de datos para los símbolos y timeframes especificados
+        
+        Args:
+            symbols: Lista de símbolos a recopilar (None = usar los configurados)
+            timeframes: Lista de timeframes a recopilar (None = usar los configurados)
+            limit: Número de velas a recopilar
+            update_signal: Señal para actualizar la interfaz (opcional)
+            progress_signal: Señal para actualizar el progreso (opcional)
+            
+        Returns:
+            dict: Datos recopilados organizados por símbolo y timeframe
+        """
+        try:
+            # Usar símbolos y timeframes configurados si no se especifican
+            symbols = symbols or self.symbols
+            timeframes = timeframes or self.timeframes
+            
+            # Validar símbolos
+            valid_symbols = []
+            for symbol in symbols:
+                if await self.validate_symbol(symbol):
+                    valid_symbols.append(symbol)
+                elif update_signal:
+                    update_signal.emit(f"Símbolo inválido: {symbol}")
+            
+            if not valid_symbols:
+                if update_signal:
+                    update_signal.emit("No hay símbolos válidos para recopilar datos")
+                return {}
+            
+            # Inicializar resultados
+            results = {}
+            
+            # Calcular total de operaciones para el progreso
+            total_ops = len(valid_symbols) * len(timeframes)
+            completed_ops = 0
+            
+            # Recopilar datos para cada símbolo y timeframe
+            for symbol in valid_symbols:
+                results[symbol] = {}
+                
+                for timeframe in timeframes:
+                    if update_signal:
+                        update_signal.emit(f"Recopilando datos para {symbol} en {timeframe}")
+                    
+                    # Recopilar datos para este símbolo y timeframe
+                    success = await self.collect_data_for_symbol_timeframe(
+                        symbol=symbol,
+                        timeframe=timeframe,
+                        days_to_collect=self.days_to_collect
+                    )
+                    
+                    if success:
+                        # Cargar los datos recopilados
+                        filename = f"{self.data_dir}/{symbol.replace('/', '_')}_{timeframe}.json"
+                        try:
+                            with open(filename, 'r') as f:
+                                data = json.load(f)
+                            
+                            results[symbol][timeframe] = data
+                            if update_signal:
+                                update_signal.emit(f"Recopilados {len(data)} datos para {symbol} en {timeframe}")
+                        except Exception as e:
+                            logger.error(f"Error al cargar datos recopilados: {e}")
+                            if update_signal:
+                                update_signal.emit(f"Error al cargar datos: {str(e)}")
+                    else:
+                        if update_signal:
+                            update_signal.emit(f"No se pudieron recopilar datos para {symbol} en {timeframe}")
+                    
+                    # Actualizar progreso
+                    completed_ops += 1
+                    if progress_signal:
+                        progress_percent = int((completed_ops / total_ops) * 100)
+                        progress_signal.emit(progress_percent)
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error en la recopilación de datos: {e}")
+        finally:
+            await self.close()
+    
+    async def close(self):
+        """Libera recursos"""
+        logger.info("Liberando recursos...")
+        
+        if self.data_fetcher:
+            if hasattr(self.data_fetcher, 'close'):
+                await self.data_fetcher.close()
+
+# Función principal para ejecutar el recopilador directamente
+async def main():
+    # Parsear argumentos de línea de comandos
+    parser = argparse.ArgumentParser(description='Recopilador de datos históricos para trading')
+    parser.add_argument('--config', type=str, default='config/settings.json', help='Archivo de configuración')
+    parser.add_argument('--days', type=int, help='Días a recopilar')
+    parser.add_argument('--symbols', type=str, help='Símbolos a recopilar (separados por comas)')
+    parser.add_argument('--timeframes', type=str, help='Timeframes a recopilar (separados por comas)')
+    args = parser.parse_args()
+    
+    print_banner("CRYPTO HISTORICAL DATA COLLECTOR")
+    
+    # Cargar configuración
+    try:
+        with open(args.config, 'r') as f:
+            config = json.load(f)
+    except Exception as e:
+        logger.error(f"Error al cargar configuración: {e}")
+        return
+    
+    # Sobrescribir configuración con argumentos
+    if args.days:
+        if 'data_collection' not in config:
+            config['data_collection'] = {}
+        config['data_collection']['days_to_collect'] = args.days
+    
+    if args.symbols:
+        symbols = [s.strip() for s in args.symbols.split(',')]
+        if 'data_collection' not in config:
+            config['data_collection'] = {}
+        config['data_collection']['symbols'] = symbols
+    
+    if args.timeframes:
+        timeframes = [t.strip() for t in args.timeframes.split(',')]
+        if 'data_collection' not in config:
+            config['data_collection'] = {}
+        config['data_collection']['timeframes'] = timeframes
+    
+    # Crear y ejecutar recopilador
+    collector = DataCollector(config)
+    await collector.run()
+
+if __name__ == "__main__":
+    # Configurar logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # Ejecutar
+    asyncio.run(main())

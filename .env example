@@ -1,0 +1,14 @@
+############### KRAKEN ###############
+KRAKEN_API_KEY=tu_kraken_api_key
+KRAKEN_API_SECRET=tu_kraken_api_secret
+############### OPENAI ###############
+OPENAI_KEY=tu_openai_api_key
+############### SÍMBOLOS MONITOREO ###############
+SYMBOLS=BTC/USD,ETH/USD
+############### % RIESGO ###############
+RISK_PERCENT=1.0
+############### AMERITRADE ###############
+API_KEY=YOUR TDAmeritrade API KEY
+REDIRECT_URI=https://localhost:8080
+TOKEN_PATH=credentials.json
+ACCOUNT_ID=YOUR TDAmeritrade ACCOUNT ID
